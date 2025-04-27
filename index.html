@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamer Life Simulator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #0f0f1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #e0e0e0;
+        }
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
+        .game-card {
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
+            border: 1px solid #2a2a5a;
+            transition: all 0.3s ease;
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        .btn-glow {
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+        }
+        .btn-glow:after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%);
+            transform: rotate(30deg);
+            transition: all 0.5s;
+            opacity: 0;
+            z-index: -1;
+        }
+        .btn-glow:hover:after {
+            opacity: 1;
+            left: 100%;
+        }
+        #notification-area {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .notification {
+            animation: slideIn 0.5s forwards;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .tab-content {
+            display: none;
+        }
+        .active-tab {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-6">
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Left Panel - Stats -->
+            <div class="w-full md:w-1/4">
+                <div class="bg-gray-900 rounded-lg p-4 shadow-lg mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-purple-400" id="player-name">Gamer</h2>
+                        <span class="bg-purple-600 text-white px-2 py-1 rounded-full text-sm" id="player-level">Level 1</span>
+                    </div>
+                    <div class="mb-4">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm text-gray-300">XP</span>
+                            <span class="text-sm text-gray-300" id="xp-value">0/100</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full progress-bar" id="xp-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="stat-item">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-gray-300">Energy</span>
+                                <span class="text-sm text-gray-300" id="energy-value">100/100</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full progress-bar" id="energy-bar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-gray-300">Health</span>
+                                <span class="text-sm text-gray-300" id="health-value">100/100</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-red-500 h-2 rounded-full progress-bar" id="health-bar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-gray-300">Skill</span>
+                                <span class="text-sm text-gray-300" id="skill-value">10/100</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full progress-bar" id="skill-bar" style="width: 10%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm text-gray-300">Fame</span>
+                                <span class="text-sm text-gray-300" id="fame-value">0/100</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-pink-500 h-2 rounded-full progress-bar" id="fame-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm text-gray-300">Money</span>
+                            <span class="text-sm text-gray-300">$<span id="money-value">500</span></span>
+                        </div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm text-gray-300">Day</span>
+                            <span class="text-sm text-gray-300" id="day-value">1</span>
+                        </div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm text-gray-300">Time</span>
+                            <span class="text-sm text-gray-300" id="time-value">8:00 AM</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg p-4 shadow-lg">
+                    <h3 class="text-lg font-semibold text-purple-400 mb-2">Notifications</h3>
+                    <div id="notification-area" class="space-y-2">
+                        <div class="notification bg-gray-800 p-2 rounded text-sm">Welcome to Gamer Life Simulator! Start your journey to become a pro gamer.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="w-full md:w-3/4">
+                <!-- Tabs -->
+                <div class="bg-gray-900 rounded-lg p-1 shadow-lg mb-6">
+                    <div class="flex overflow-x-auto">
+                        <button class="tab-btn py-2 px-4 font-medium focus:outline-none text-purple-400 border-b-2 border-purple-400" data-tab="home">Home</button>
+                        <button class="tab-btn py-2 px-4 font-medium focus:outline-none text-gray-400" data-tab="gaming">Gaming</button>
+                        <button class="tab-btn py-2 px-4 font-medium focus:outline-none text-gray-400" data-tab="career">Career</button>
+                        <button class="tab-btn py-2 px-4 font-medium focus:outline-none text-gray-400" data-tab="social">Social</button>
+                        <button class="tab-btn py-2 px-4 font-medium focus:outline-none text-gray-400" data-tab="shop">Shop</button>
+                        <button class="tab-btn py-2 px-4 font-medium focus:outline-none text-gray-400" data-tab="health">Health</button>
+                        <button class="tab-btn py-2 px-4 font-medium focus:outline-none text-gray-400" data-tab="stats">Stats</button>
+                    </div>
+                </div>
+                
+                <!-- Tab Content -->
+                <div class="bg-gray-900 rounded-lg p-6 shadow-lg">
+                    <!-- Home Tab -->
+                    <div id="home-tab" class="tab-content active-tab">
+                        <h2 class="text-2xl font-bold text-purple-400 mb-4">Your Gaming Setup</h2>
+                        <div class="bg-gray-800 p-4 rounded-lg mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="flex items-center">
+                                    <i class="fas fa-desktop text-3xl text-purple-400 mr-4"></i>
+                                    <div>
+                                        <h3 class="font-semibold" id="computer-name">Basic Computer</h3>
+                                        <p class="text-sm text-gray-400">+5 Gaming Skill when used</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-chair text-3xl text-blue-400 mr-4"></i>
+                                    <div>
+                                        <h3 class="font-semibold" id="chair-name">Simple Chair</h3>
+                                        <p class="text-sm text-gray-400">+0 Energy conservation</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-headset text-3xl text-green-400 mr-4"></i>
+                                    <div>
+                                        <h3 class="font-semibold" id="headset-name">Basic Headset</h3>
+                                        <p class="text-sm text-gray-400">+0 Communication bonus</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-mouse text-3xl text-red-400 mr-4"></i>
+                                    <div>
+                                        <h3 class="font-semibold" id="mouse-name">Standard Mouse</h3>
+                                        <p class="text-sm text-gray-400">+0 Precision bonus</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h2 class="text-2xl font-bold text-purple-400 mb-4">Daily Activities</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button class="action-btn game-card p-4 rounded-lg flex items-center" data-action="practice">
+                                <i class="fas fa-gamepad text-3xl text-yellow-400 mr-4"></i>
+                                <div>
+                                    <h3 class="font-semibold">Practice Gaming</h3>
+                                    <p class="text-sm text-gray-400">+Skill, -Energy (2 hours)</p>
+                                </div>
+                            </button>
+                            <button class="action-btn game-card p-4 rounded-lg flex items-center" data-action="sleep">
+                                <i class="fas fa-bed text-3xl text-blue-400 mr-4"></i>
+                                <div>
+                                    <h3 class="font-semibold">Sleep</h3>
+                                    <p class="text-sm text-gray-400">+Energy, +Health (8 hours)</p>
+                                </div>
+                            </button>
+                            <button class="action-btn game-card p-4 rounded-lg flex items-center" data-action="eat">
+                                <i class="fas fa-utensils text-3xl text-green-400 mr-4"></i>
+                                <div>
+                                    <h3 class="font-semibold">Eat</h3>
+                                    <p class="text-sm text-gray-400">+Energy, +Health (1 hour)</p>
+                                </div>
+                            </button>
+                            <button class="action-btn game-card p-4 rounded-lg flex items-center" data-action="stream">
+                                <i class="fas fa-video text-3xl text-red-400 mr-4"></i>
+                                <div>
+                                    <h3 class="font-semibold">Stream</h3>
+                                    <p class="text-sm text-gray-400">+Fame, +Money, -Energy (4 hours)</p>
+                                </div>
+                            </button>
+                            <button class="action-btn game-card p-4 rounded-lg flex items-center" data-action="exercise">
+                                <i class="fas fa-dumbbell text-3xl text-orange-400 mr-4"></i>
+                                <div>
+                                    <h3 class="font-semibold">Exercise</h3>
+                                    <p class="text-sm text-gray-400">+Health, -Energy (1 hour)</p>
+                                </div>
+                            </button>
+                            <button class="action-btn game-card p-4 rounded-lg flex items-center" data-action="socialize">
+                                <i class="fas fa-users text-3xl text-purple-400 mr-4"></i>
+                                <div>
+                                    <h3 class="font-semibold">Socialize</h3>
+                                    <p class="text-sm text-gray-400">+Fame, -Money (2 hours)</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Gaming Tab -->
+                    <div id="gaming-tab" class="tab-content">
+                        <h2 class="text-2xl font-bold text-purple-400 mb-4">Gaming Activities</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-trophy text-4xl text-yellow-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Casual Gaming</h3>
+                                <p class="text-sm text-gray-400 mb-3">Just play for fun and practice your skills.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Skill Req:</span>
+                                    <span>None</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>2 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Reward:</span>
+                                    <span>+5 Skill</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="casual-gaming">Play</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-medal text-4xl text-blue-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Ranked Matches</h3>
+                                <p class="text-sm text-gray-400 mb-3">Compete against others to improve ranking.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Skill Req:</span>
+                                    <span>20+</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>3 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Reward:</span>
+                                    <span>+10 Skill, +5 Fame</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="ranked-gaming">Play</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-crown text-4xl text-yellow-500"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Local Tournament</h3>
+                                <p class="text-sm text-gray-400 mb-3">Join a local tournament for prizes.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Skill Req:</span>
+                                    <span>40+</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>6 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Reward:</span>
+                                    <span>$100-500, +15 Fame</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="local-tournament">Enter</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-star text-4xl text-yellow-300"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Regional Championship</h3>
+                                <p class="text-sm text-gray-400 mb-3">Compete at regional level for recognition.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Skill Req:</span>
+                                    <span>70+</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>8 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Reward:</span>
+                                    <span>$1000-2000, +25 Fame</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="regional-championship">Enter</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-globe text-4xl text-blue-500"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">National Championship</h3>
+                                <p class="text-sm text-gray-400 mb-3">Compete at national level for big prizes.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Skill Req:</span>
+                                    <span>85+</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>12 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Reward:</span>
+                                    <span>$5000-10000, +40 Fame</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="national-championship">Enter</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-award text-4xl text-red-500"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">World Championship</h3>
+                                <p class="text-sm text-gray-400 mb-3">The ultimate gaming competition.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Skill Req:</span>
+                                    <span>95+</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>16 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Reward:</span>
+                                    <span>$20000-50000, +100 Fame</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="world-championship">Enter</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Career Tab -->
+                    <div id="career-tab" class="tab-content">
+                        <h2 class="text-2xl font-bold text-purple-400 mb-4">Career Path</h2>
+                        
+                        <div class="bg-gray-800 p-4 rounded-lg mb-6">
+                            <h3 class="font-semibold text-lg mb-2">Current Status</h3>
+                            <div class="flex flex-wrap gap-4">
+                                <div class="bg-gray-700 px-3 py-2 rounded-lg">
+                                    <span class="text-sm text-gray-300">Rank:</span>
+                                    <span class="text-sm text-white font-medium" id="player-rank">Amateur</span>
+                                </div>
+                                <div class="bg-gray-700 px-3 py-2 rounded-lg">
+                                    <span class="text-sm text-gray-300">Team:</span>
+                                    <span class="text-sm text-white font-medium" id="player-team">None</span>
+                                </div>
+                                <div class="bg-gray-700 px-3 py-2 rounded-lg">
+                                    <span class="text-sm text-gray-300">Sponsors:</span>
+                                    <span class="text-sm text-white font-medium" id="player-sponsors">0</span>
+                                </div>
+                                <div class="bg-gray-700 px-3 py-2 rounded-lg">
+                                    <span class="text-sm text-gray-300">Monthly Income:</span>
+                                    <span class="text-sm text-white font-medium">$<span id="monthly-income">0</span></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-xl font-semibold text-purple-400 mb-3">Career Opportunities</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-briefcase text-4xl text-blue-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Part-time Job</h3>
+                                <p class="text-sm text-gray-400 mb-3">Work at a game store to earn some money.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Requirements:</span>
+                                    <span>None</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>4 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Reward:</span>
+                                    <span>$50, -20 Energy</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="part-time-job">Work</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-handshake text-4xl text-green-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Find Team</h3>
+                                <p class="text-sm text-gray-400 mb-3">Join an amateur team to start your career.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Requirements:</span>
+                                    <span>Skill 30+, Fame 10+</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>2 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Reward:</span>
+                                    <span>Team Membership</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="find-team">Apply</button>
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-xl font-semibold text-purple-400 mb-3">Sponsorship Offers</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-ad text-4xl text-yellow-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Small Sponsor</h3>
+                                <p class="text-sm text-gray-400 mb-3">Local company wants to sponsor you.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Requirements:</span>
+                                    <span>Fame 25+</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Reward:</span>
+                                    <span>$200/month</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="small-sponsor">Apply</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-building text-4xl text-blue-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Major Sponsor</h3>
+                                <p class="text-sm text-gray-400 mb-3">Gaming company wants to sponsor you.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Requirements:</span>
+                                    <span>Fame 60+</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Reward:</span>
+                                    <span>$1000/month</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="major-sponsor">Apply</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Social Tab -->
+                    <div id="social-tab" class="tab-content">
+                        <h2 class="text-2xl font-bold text-purple-400 mb-4">Social Media Presence</h2>
+                        
+                        <div class="bg-gray-800 p-4 rounded-lg mb-6">
+                            <h3 class="font-semibold text-lg mb-2">Your Online Presence</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="bg-gray-700 p-3 rounded-lg text-center">
+                                    <i class="fab fa-twitch text-2xl text-purple-400 mb-2"></i>
+                                    <div class="text-sm">Followers</div>
+                                    <div class="font-semibold" id="twitch-followers">0</div>
+                                </div>
+                                <div class="bg-gray-700 p-3 rounded-lg text-center">
+                                    <i class="fab fa-youtube text-2xl text-red-400 mb-2"></i>
+                                    <div class="text-sm">Subscribers</div>
+                                    <div class="font-semibold" id="youtube-subscribers">0</div>
+                                </div>
+                                <div class="bg-gray-700 p-3 rounded-lg text-center">
+                                    <i class="fab fa-twitter text-2xl text-blue-400 mb-2"></i>
+                                    <div class="text-sm">Followers</div>
+                                    <div class="font-semibold" id="twitter-followers">0</div>
+                                </div>
+                                <div class="bg-gray-700 p-3 rounded-lg text-center">
+                                    <i class="fab fa-instagram text-2xl text-pink-400 mb-2"></i>
+                                    <div class="text-sm">Followers</div>
+                                    <div class="font-semibold" id="instagram-followers">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-xl font-semibold text-purple-400 mb-3">Content Creation</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-camera text-4xl text-purple-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Create Stream</h3>
+                                <p class="text-sm text-gray-400 mb-3">Stream your gameplay on Twitch.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>4 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Energy Cost:</span>
+                                    <span>-20 Energy</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Potential Gain:</span>
+                                    <span>+Followers, +Fame, +$</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="create-stream">Stream</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-video text-4xl text-red-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Record Video</h3>
+                                <p class="text-sm text-gray-400 mb-3">Create a YouTube video.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>3 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Energy Cost:</span>
+                                    <span>-15 Energy</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Potential Gain:</span>
+                                    <span>+Subscribers, +Fame, +$</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="record-video">Record</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-comment text-4xl text-blue-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Post on Social Media</h3>
+                                <p class="text-sm text-gray-400 mb-3">Share updates on Twitter/Instagram.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>1 hour</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Energy Cost:</span>
+                                    <span>-5 Energy</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Potential Gain:</span>
+                                    <span>+Followers, +Fame</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="social-post">Post</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-users text-4xl text-green-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Engage With Community</h3>
+                                <p class="text-sm text-gray-400 mb-3">Reply to comments and messages.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>2 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Energy Cost:</span>
+                                    <span>-10 Energy</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Potential Gain:</span>
+                                    <span>+Loyalty, +Fame</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="engage-community">Engage</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shop Tab -->
+                    <div id="shop-tab" class="tab-content">
+                        <h2 class="text-2xl font-bold text-purple-400 mb-4">Gaming Shop</h2>
+                        
+                        <div class="bg-gray-800 p-4 rounded-lg mb-6">
+                            <h3 class="font-semibold text-lg mb-2">Your Wallet</h3>
+                            <div class="text-xl font-semibold">$<span id="shop-money">500</span></div>
+                        </div>
+                        
+                        <h3 class="text-xl font-semibold text-purple-400 mb-3">Computer Upgrades</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-desktop text-4xl text-blue-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Mid-Tier PC</h3>
+                                <p class="text-sm text-gray-400 mb-3">Decent performance for most games.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Price:</span>
+                                    <span>$1,000</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Skill Bonus:</span>
+                                    <span>+10</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="buy-mid-pc" data-price="1000" data-item="Mid-Tier PC">Buy</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-desktop text-4xl text-purple-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Gaming PC</h3>
+                                <p class="text-sm text-gray-400 mb-3">High-performance gaming rig.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Price:</span>
+                                    <span>$2,500</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Skill Bonus:</span>
+                                    <span>+20</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="buy-gaming-pc" data-price="2500" data-item="Gaming PC">Buy</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-desktop text-4xl text-yellow-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Pro Gaming PC</h3>
+                                <p class="text-sm text-gray-400 mb-3">Top-of-the-line professional setup.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Price:</span>
+                                    <span>$5,000</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Skill Bonus:</span>
+                                    <span>+30</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="buy-pro-pc" data-price="5000" data-item="Pro Gaming PC">Buy</button>
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-xl font-semibold text-purple-400 mb-3">Peripherals</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-chair text-4xl text-green-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Gaming Chair</h3>
+                                <p class="text-sm text-gray-400 mb-3">Comfortable chair for long sessions.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Price:</span>
+                                    <span>$300</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Energy Bonus:</span>
+                                    <span>+10% conservation</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="buy-chair" data-price="300" data-item="Gaming Chair">Buy</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-headset text-4xl text-blue-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Pro Headset</h3>
+                                <p class="text-sm text-gray-400 mb-3">High-quality audio for gaming.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Price:</span>
+                                    <span>$200</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Communication:</span>
+                                    <span>+10% bonus</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="buy-headset" data-price="200" data-item="Pro Headset">Buy</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-mouse text-4xl text-red-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Gaming Mouse</h3>
+                                <p class="text-sm text-gray-400 mb-3">Precision mouse for better control.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Price:</span>
+                                    <span>$100</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Precision:</span>
+                                    <span>+10% bonus</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="buy-mouse" data-price="100" data-item="Gaming Mouse">Buy</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Health Tab -->
+                    <div id="health-tab" class="tab-content">
+                        <h2 class="text-2xl font-bold text-purple-400 mb-4">Health & Wellness</h2>
+                        
+                        <div class="bg-gray-800 p-4 rounded-lg mb-6">
+                            <h3 class="font-semibold text-lg mb-2">Your Health Status</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-gray-700 p-3 rounded-lg">
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm text-gray-300">Health:</span>
+                                        <span class="text-sm text-gray-300" id="health-status-value">100/100</span>
+                                    </div>
+                                    <div class="w-full bg-gray-800 rounded-full h-2">
+                                        <div class="bg-red-500 h-2 rounded-full progress-bar" id="health-status-bar" style="width: 100%"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-700 p-3 rounded-lg">
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm text-gray-300">Energy:</span>
+                                        <span class="text-sm text-gray-300" id="energy-status-value">100/100</span>
+                                    </div>
+                                    <div class="w-full bg-gray-800 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full progress-bar" id="energy-status-bar" style="width: 100%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 class="text-xl font-semibold text-purple-400 mb-3">Activities</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-dumbbell text-4xl text-red-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Exercise</h3>
+                                <p class="text-sm text-gray-400 mb-3">Physical workout to maintain health.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>1 hour</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Energy Cost:</span>
+                                    <span>-10</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Health Gain:</span>
+                                    <span>+15</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="exercise-activity">Exercise</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-utensils text-4xl text-green-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Healthy Meal</h3>
+                                <p class="text-sm text-gray-400 mb-3">Prepare and eat a nutritious meal.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>1 hour</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Cost:</span>
+                                    <span>$20</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Health Gain:</span>
+                                    <span>+10</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Energy Gain:</span>
+                                    <span>+20</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="healthy-meal" data-price="20">Eat</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-bed text-4xl text-blue-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Full Sleep</h3>
+                                <p class="text-sm text-gray-400 mb-3">Get a full 8 hours of rest.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>8 hours</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Energy Gain:</span>
+                                    <span>+100</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Health Gain:</span>
+                                    <span>+5</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="full-sleep">Sleep</button>
+                            </div>
+                            
+                            <div class="game-card p-4 rounded-lg">
+                                <div class="text-center mb-2">
+                                    <i class="fas fa-couch text-4xl text-purple-400"></i>
+                                </div>
+                                <h3 class="font-semibold text-center mb-2">Quick Nap</h3>
+                                <p class="text-sm text-gray-400 mb-3">Take a short nap to restore energy.</p>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Time:</span>
+                                    <span>1 hour</span>
+                                </div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Energy Gain:</span>
+                                    <span>+20</span>
+                                </div>
+                                <button class="action-btn w-full bg-purple-700 hover:bg-purple-600 text-white py-2 rounded mt-2 btn-glow" data-action="quick-nap">Nap</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats Tab -->
+                    <div id="stats-tab" class="tab-content">
+                        <h2 class="text-2xl font-bold text-purple-400 mb-4">Your Statistics</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-gray-800 p-4 rounded-lg">
+                                <h3 class="font-semibold text-lg mb-4">Player Profile</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span>Name:</span>
+                                        <span id="stats-name">Gamer</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Level:</span>
+                                        <span id="stats-level">1</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Days Played:</span>
+                                        <span id="stats-days">1</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Rank:</span>
+                                        <span id="stats-rank">Amateur</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Team:</span>
+                                        <span id="stats-team">None</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-800 p-4 rounded-lg">
+                                <h3 class="font-semibold text-lg mb-4">Career Stats</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span>Tournaments Joined:</span>
+                                        <span id="stats-tournaments">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Tournaments Won:</span>
+                                        <span id="stats-tournament-wins">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Total Earnings:</span>
+                                        <span>$<span id="stats-earnings">0</span></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Sponsors:</span>
+                                        <span id="stats-sponsors">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Monthly Income:</span>
+                                        <span>$<span id="stats-income">0</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-800 p-4 rounded-lg">
+                                <h3 class="font-semibold text-lg mb-4">Social Media Stats</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span>Twitch Followers:</span>
+                                        <span id="stats-twitch">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>YouTube Subscribers:</span>
+                                        <span id="stats-youtube">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Twitter Followers:</span>
+                                        <span id="stats-twitter">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Instagram Followers:</span>
+                                        <span id="stats-instagram">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Total Fame:</span>
+                                        <span id="stats-fame">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-800 p-4 rounded-lg">
+                                <h3 class="font-semibold text-lg mb-4">Equipment</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span>Computer:</span>
+                                        <span id="stats-computer">Basic Computer</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Chair:</span>
+                                        <span id="stats-chair">Simple Chair</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Headset:</span>
+                                        <span id="stats-headset">Basic Headset</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Mouse:</span>
+                                        <span id="stats-mouse">Standard Mouse</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button id="new-game-btn" class="w-full bg-red-600 hover:bg-red-500 text-white py-3 rounded mt-2 font-semibold btn-glow">Start New Game</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Intro Modal -->
+    <div id="intro-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+        <div class="bg-gray-900 rounded-lg p-8 max-w-lg w-full shadow-2xl border border-purple-500">
+            <h2 class="text-2xl font-bold text-purple-400 mb-4">Welcome to Gamer Life Simulator</h2>
+            <p class="mb-4">Experience the life of a professional gamer! Balance your skills, health, social media presence, and career to become a world champion.</p>
+            <p class="mb-4">Start as a beginner and work your way up through tournaments, building your brand, and upgrading your equipment.</p>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Choose your gamer name:</label>
+                <input type="text" id="player-name-input" class="w-full bg-gray-800 border border-gray-700 rounded py-2 px-3 text-white focus:outline-none focus:border-purple-500" placeholder="Enter your gamer name">
+            </div>
+            
+            <button id="start-game-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded font-semibold btn-glow">Start Your Gaming Career</button>
+        </div>
+    </div>
+    
+    <!-- Event Modal -->
+    <div id="event-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-900 rounded-lg p-6 max-w-md w-full shadow-2xl border border-purple-500">
+            <h2 class="text-xl font-bold text-purple-400 mb-2" id="event-title">Event Title</h2>
+            <p class="mb-4" id="event-description">Event description goes here.</p>
+            <div class="flex justify-end">
+                <button id="event-ok-btn" class="bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded font-medium btn-glow">OK</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Game state
+        let gameState = {
+            player: {
+                name: "Gamer",
+                level: 1,
+                xp: 0,
+                xpToNextLevel: 100,
+                energy: 100,
+                maxEnergy: 100,
+                health: 100,
+                maxHealth: 100,
+                skill: 10,
+                maxSkill: 100,
+                fame: 0,
+                maxFame: 100,
+                money: 500,
+                day: 1,
+                hour: 8, // 8 AM
+                rank: "Amateur",
+                team: "None",
+                sponsors: 0,
+                monthlyIncome: 0,
+                tournaments: 0,
+                tournamentWins: 0,
+                totalEarnings: 0
+            },
+            social: {
+                twitch: 0,
+                youtube: 0,
+                twitter: 0,
+                instagram: 0
+            },
+            equipment: {
+                computer: "Basic Computer",
+                chair: "Simple Chair",
+                headset: "Basic Headset",
+                mouse: "Standard Mouse",
+                computerBonus: 5,
+                chairBonus: 0,
+                headsetBonus: 0,
+                mouseBonus: 0
+            }
+        };
+        
+        // DOM Elements
+        const introModal = document.getElementById('intro-modal');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const playerNameInput = document.getElementById('player-name-input');
+        const eventModal = document.getElementById('event-modal');
+        const eventTitle = document.getElementById('event-title');
+        const eventDescription = document.getElementById('event-description');
+        const eventOkBtn = document.getElementById('event-ok-btn');
+        const notificationArea = document.getElementById('notification-area');
+        const newGameBtn = document.getElementById('new-game-btn');
+        
+        // Tab functionality
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.getAttribute('data-tab');
+                
+                // Remove active class from all tabs
+                tabBtns.forEach(b => b.classList.remove('text-purple-400', 'border-b-2', 'border-purple-400'));
+                tabBtns.forEach(b => b.classList.add('text-gray-400'));
+                tabContents.forEach(content => content.classList.remove('active-tab'));
+                
+                // Add active class to clicked tab
+                btn.classList.remove('text-gray-400');
+                btn.classList.add('text-purple-400', 'border-b-2', 'border-purple-400');
+                document.getElementById(`${tabName}-tab`).classList.add('active-tab');
+            });
+        });
+        
+        // Update UI based on game state
+        function updateUI() {
+            // Update player stats
+            document.getElementById('player-name').textContent = gameState.player.name;
+            document.getElementById('player-level').textContent = `Level ${gameState.player.level}`;
+            document.getElementById('xp-value').textContent = `${gameState.player.xp}/${gameState.player.xpToNextLevel}`;
+            document.getElementById('xp-bar').style.width = `${(gameState.player.xp / gameState.player.xpToNextLevel) * 100}%`;
+            
+            document.getElementById('energy-value').textContent = `${gameState.player.energy}/${gameState.player.maxEnergy}`;
+            document.getElementById('energy-bar').style.width = `${(gameState.player.energy / gameState.player.maxEnergy) * 100}%`;
+            
+            document.getElementById('health-value').textContent = `${gameState.player.health}/${gameState.player.maxHealth}`;
+            document.getElementById('health-bar').style.width = `${(gameState.player.health / gameState.player.maxHealth) * 100}%`;
+            
+            document.getElementById('skill-value').textContent = `${gameState.player.skill}/${gameState.player.maxSkill}`;
+            document.getElementById('skill-bar').style.width = `${(gameState.player.skill / gameState.player.maxSkill) * 100}%`;
+            
+            document.getElementById('fame-value').textContent = `${gameState.player.fame}/${gameState.player.maxFame}`;
+            document.getElementById('fame-bar').style.width = `${(gameState.player.fame / gameState.player.maxFame) * 100}%`;
+            
+            document.getElementById('money-value').textContent = gameState.player.money;
+            document.getElementById('day-value').textContent = gameState.player.day;
+            document.getElementById('time-value').textContent = formatTime(gameState.player.hour);
+            
+            // Update health tab stats
+            document.getElementById('health-status-value').textContent = `${gameState.player.health}/${gameState.player.maxHealth}`;
+            document.getElementById('health-status-bar').style.width = `${(gameState.player.health / gameState.player.maxHealth) * 100}%`;
+            document.getElementById('energy-status-value').textContent = `${gameState.player.energy}/${gameState.player.maxEnergy}`;
+            document.getElementById('energy-status-bar').style.width = `${(gameState.player.energy / gameState.player.maxEnergy) * 100}%`;
+            
+            // Update career info
+            document.getElementById('player-rank').textContent = gameState.player.rank;
+            document.getElementById('player-team').textContent = gameState.player.team;
+            document.getElementById('player-sponsors').textContent = gameState.player.sponsors;
+            document.getElementById('monthly-income').textContent = gameState.player.monthlyIncome;
+            
+            // Update shop money
+            document.getElementById('shop-money').textContent = gameState.player.money;
+            
+            // Update social stats
+            document.getElementById('twitch-followers').textContent = formatNumber(gameState.social.twitch);
+            document.getElementById('youtube-subscribers').textContent = formatNumber(gameState.social.youtube);
+            document.getElementById('twitter-followers').textContent = formatNumber(gameState.social.twitter);
+            document.getElementById('instagram-followers').textContent = formatNumber(gameState.social.instagram);
+            
+            // Update equipment
+            document.getElementById('computer-name').textContent = gameState.equipment.computer;
+            document.getElementById('chair-name').textContent = gameState.equipment.chair;
+            document.getElementById('headset-name').textContent = gameState.equipment.headset;
+            document.getElementById('mouse-name').textContent = gameState.equipment.mouse;
+            
+            // Update stats tab
+            document.getElementById('stats-name').textContent = gameState.player.name;
+            document.getElementById('stats-level').textContent = gameState.player.level;
+            document.getElementById('stats-days').textContent = gameState.player.day;
+            document.getElementById('stats-rank').textContent = gameState.player.rank;
+            document.getElementById('stats-team').textContent = gameState.player.team;
+            document.getElementById('stats-tournaments').textContent = gameState.player.tournaments;
+            document.getElementById('stats-tournament-wins').textContent = gameState.player.tournamentWins;
+            document.getElementById('stats-earnings').textContent = gameState.player.totalEarnings;
+            document.getElementById('stats-sponsors').textContent = gameState.player.sponsors;
+            document.getElementById('stats-income').textContent = gameState.player.monthlyIncome;
+            document.getElementById('stats-twitch').textContent = formatNumber(gameState.social.twitch);
+            document.getElementById('stats-youtube').textContent = formatNumber(gameState.social.youtube);
+            document.getElementById('stats-twitter').textContent = formatNumber(gameState.social.twitter);
+            document.getElementById('stats-instagram').textContent = formatNumber(gameState.social.instagram);
+            document.getElementById('stats-fame').textContent = gameState.player.fame;
+            document.getElementById('stats-computer').textContent = gameState.equipment.computer;
+            document.getElementById('stats-chair').textContent = gameState.equipment.chair;
+            document.getElementById('stats-headset').textContent = gameState.equipment.headset;
+            document.getElementById('stats-mouse').textContent = gameState.equipment.mouse;
+        }
+        
+        // Format time (8 -> 8:00 AM, 13 -> 1:00 PM)
+        function formatTime(hour) {
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            return `${hour12}:00 ${ampm}`;
+        }
+        
+        // Format large numbers with K, M, etc.
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num;
+        }
+        
+        // Add notification
+        function addNotification(message) {
+            const notif = document.createElement('div');
+            notif.className = 'notification bg-gray-800 p-2 rounded text-sm';
+            notif.textContent = message;
+            notificationArea.prepend(notif);
+            
+            // Keep only the most recent 10 notifications
+            const notifications = notificationArea.querySelectorAll('.notification');
+            if (notifications.length > 10) {
+                notificationArea.removeChild(notifications[notifications.length - 1]);
+            }
+        }
+        
+        // Show event modal
+        function showEvent(title, description) {
+            eventTitle.textContent = title;
+            eventDescription.textContent = description;
+            eventModal.classList.remove('hidden');
+        }
+        
+        // Advance time
+        function advanceTime(hours) {
+            gameState.player.hour += hours;
+            
+            // If day ends, advance to next day
+            if (gameState.player.hour >= 24) {
+                gameState.player.hour %= 24;
+                gameState.player.day += 1;
+                
+                // Monthly income
+                if (gameState.player.day % 30 === 0) {
+                    gameState.player.money += gameState.player.monthlyIncome;
+                    addNotification(`You received your monthly income of $${gameState.player.monthlyIncome}!`);
+                }
+                
+                // Random events
+                if (Math.random() < 0.2) {
+                    triggerRandomEvent();
+                }
+            }
+            
+            // Natural energy decline
+            gameState.player.energy = Math.max(0, gameState.player.energy - 2);
+            
+            // Natural health decline if energy is very low
+            if (gameState.player.energy < 10) {
+                gameState.player.health = Math.max(1, gameState.player.health - 5);
+                addNotification("Your energy is very low. Your health is suffering!");
+            }
+            
+            updateUI();
+        }
+        
+        // Level up function
+        function checkLevelUp() {
+            if (gameState.player.xp >= gameState.player.xpToNextLevel) {
+                gameState.player.level += 1;
+                gameState.player.xp -= gameState.player.xpToNextLevel;
+                gameState.player.xpToNextLevel = Math.floor(gameState.player.xpToNextLevel * 1.5);
+                gameState.player.maxEnergy += 10;
+                gameState.player.maxHealth += 5;
+                showEvent("Level Up!", `Congratulations! You've reached level ${gameState.player.level}. Your maximum energy and health have increased.`);
+                updateUI();
+            }
+        }
+        
+        // Random events
+        function triggerRandomEvent() {
+            const events = [
+                {
+                    title: "Game Update!",
+                    description: "Your main game has received an update. You spend time learning the changes.",
+                    effect: () => {
+                        gameState.player.skill = Math.max(0, gameState.player.skill - 5);
+                        addNotification("A game update reduced your skill by 5 points.");
+                    }
+                },
+                {
+                    title: "Fan Donation!",
+                    description: "A fan has made a generous donation to support your gaming career!",
+                    effect: () => {
+                        const amount = Math.floor(Math.random() * 100) + 50;
+                        gameState.player.money += amount;
+                        addNotification(`A fan donated $${amount} to you!`);
+                    }
+                },
+                {
+                    title: "Viral Clip!",
+                    description: "One of your gaming clips went viral on social media!",
+                    effect: () => {
+                        const followers = Math.floor(Math.random() * 500) + 100;
+                        gameState.social.twitch += followers;
+                        gameState.player.fame += 10;
+                        addNotification(`Your clip went viral! You gained ${followers} followers and 10 fame.`);
+                    }
+                },
+                {
+                    title: "Health Issues",
+                    description: "You've been gaming too much without rest. You're experiencing wrist pain.",
+                    effect: () => {
+                        if (gameState.player.health < 30) {
+                            gameState.player.health = Math.max(1, gameState.player.health - 20);
+                            addNotification("Health issues! Your health decreased by 20 points.");
+                        }
+                    }
+                },
+                {
+                    title: "Game Streamer Shoutout!",
+                    description: "A popular streamer mentioned you in their stream!",
+                    effect: () => {
+                        const followers = Math.floor(Math.random() * 300) + 50;
+                        gameState.social.twitch += followers;
+                        gameState.social.twitter += Math.floor(followers / 2);
+                        gameState.player.fame += 5;
+                        addNotification(`A streamer gave you a shoutout! You gained ${followers} Twitch followers, ${Math.floor(followers / 2)} Twitter followers, and 5 fame.`);
+                    }
+                }
+            ];
+            
+            const event = events[Math.floor(Math.random() * events.length)];
+            showEvent(event.title, event.description);
+            event.effect();
+            updateUI();
+        }
+        
+        // Action handlers
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.getAttribute('data-action');
+                
+                // Check if player has enough energy
+                if (gameState.player.energy <= 0) {
+                    showEvent("No Energy", "You're too exhausted to do anything. Get some rest!");
+                    return;
+                }
+                
+                // Home tab actions
+                if (action === 'practice') {
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 20);
+                    gameState.player.skill = Math.min(gameState.player.maxSkill, gameState.player.skill + 5 + gameState.equipment.computerBonus);
+                    gameState.player.xp += 10;
+                    addNotification("You practiced gaming for 2 hours. +5 Skill, +10 XP");
+                    advanceTime(2);
+                    checkLevelUp();
+                } else if (action === 'sleep') {
+                    gameState.player.energy = gameState.player.maxEnergy;
+                    gameState.player.health = Math.min(gameState.player.maxHealth, gameState.player.health + 10);
+                    addNotification("You slept for 8 hours. Energy fully restored. +10 Health");
+                    advanceTime(8);
+                } else if (action === 'eat') {
+                    gameState.player.energy = Math.min(gameState.player.maxEnergy, gameState.player.energy + 15);
+                    gameState.player.health = Math.min(gameState.player.maxHealth, gameState.player.health + 5);
+                    gameState.player.money = Math.max(0, gameState.player.money - 10);
+                    addNotification("You ate a meal. +15 Energy, +5 Health, -$10");
+                    advanceTime(1);
+                } else if (action === 'stream') {
+                    if (gameState.player.skill < 15) {
+                        showEvent("Skill Too Low", "You need at least 15 skill points to start streaming.");
+                        return;
+                    }
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 30);
+                    gameState.player.fame = Math.min(gameState.player.maxFame, gameState.player.fame + 3);
+                    
+                    const viewerBase = gameState.social.twitch || 5;
+                    const viewers = Math.floor(viewerBase * (0.8 + Math.random() * 0.4));
+                    const newFollowers = Math.max(1, Math.floor(viewers * 0.05));
+                    const earnings = Math.floor(viewers * 0.02);
+                    
+                    gameState.social.twitch += newFollowers;
+                    gameState.player.money += earnings;
+                    gameState.player.xp += 15;
+                    
+                    addNotification(`You streamed for 4 hours. ${viewers} viewers, ${newFollowers} new followers, $${earnings} earned.`);
+                    advanceTime(4);
+                    checkLevelUp();
+                } else if (action === 'exercise') {
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 15);
+                    gameState.player.health = Math.min(gameState.player.maxHealth, gameState.player.health + 15);
+                    gameState.player.xp += 5;
+                    addNotification("You exercised for 1 hour. +15 Health, +5 XP");
+                    advanceTime(1);
+                    checkLevelUp();
+                } else if (action === 'socialize') {
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 10);
+                    gameState.player.fame = Math.min(gameState.player.maxFame, gameState.player.fame + 2);
+                    gameState.player.money = Math.max(0, gameState.player.money - 20);
+                    gameState.player.xp += 5;
+                    addNotification("You socialized with other gamers. +2 Fame, -$20, +5 XP");
+                    advanceTime(2);
+                    checkLevelUp();
+                }
+                
+                // Gaming tab actions
+                else if (action === 'casual-gaming') {
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 15);
+                    gameState.player.skill = Math.min(gameState.player.maxSkill, gameState.player.skill + 5 + gameState.equipment.computerBonus);
+                    gameState.player.xp += 10;
+                    addNotification("You played casually for 2 hours. +5 Skill, +10 XP");
+                    advanceTime(2);
+                    checkLevelUp();
+                } else if (action === 'ranked-gaming') {
+                    if (gameState.player.skill < 20) {
+                        showEvent("Skill Too Low", "You need at least 20 skill points to play ranked matches.");
+                        return;
+                    }
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 25);
+                    gameState.player.skill = Math.min(gameState.player.maxSkill, gameState.player.skill + 10 + gameState.equipment.computerBonus);
+                    gameState.player.fame = Math.min(gameState.player.maxFame, gameState.player.fame + 5);
+                    gameState.player.xp += 20;
+                    addNotification("You played ranked matches for 3 hours. +10 Skill, +5 Fame, +20 XP");
+                    advanceTime(3);
+                    checkLevelUp();
+                } else if (action === 'local-tournament') {
+                    if (gameState.player.skill < 40) {
+                        showEvent("Skill Too Low", "You need at least 40 skill points to enter this tournament.");
+                        return;
+                    }
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 40);
+                    gameState.player.skill = Math.min(gameState.player.maxSkill, gameState.player.skill + 15);
+                    gameState.player.tournaments += 1;
+                    
+                    // Tournament performance based on skill and equipment
+                    const performance = gameState.player.skill + gameState.equipment.computerBonus + gameState.equipment.mouseBonus + Math.floor(Math.random() * 20);
+                    let prize = 0;
+                    let result = "";
+                    
+                    if (performance > 80) {
+                        prize = Math.floor(Math.random() * 200) + 300;
+                        gameState.player.fame += 15;
+                        gameState.player.tournamentWins += 1;
+                        result = "You won 1st place!";
+                    } else if (performance > 60) {
+                        prize = Math.floor(Math.random() * 100) + 200;
+                        gameState.player.fame += 10;
+                        result = "You got 2nd place!";
+                    } else if (performance > 50) {
+                        prize = Math.floor(Math.random() * 50) + 150;
+                        gameState.player.fame += 5;
+                        result = "You got 3rd place!";
+                    } else {
+                        prize = 100;
+                        result = "You didn't place in the top 3.";
+                    }
+                    
+                    gameState.player.money += prize;
+                    gameState.player.totalEarnings += prize;
+                    gameState.player.xp += 30;
+                    
+                    showEvent("Tournament Results", `${result} You earned $${prize} and gained experience.`);
+                    addNotification(`Local tournament: ${result} +$${prize}, +15 Skill`);
+                    advanceTime(6);
+                    checkLevelUp();
+                } else if (action === 'regional-championship') {
+                    if (gameState.player.skill < 70) {
+                        showEvent("Skill Too Low", "You need at least 70 skill points to enter this championship.");
+                        return;
+                    }
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 60);
+                    gameState.player.skill = Math.min(gameState.player.maxSkill, gameState.player.skill + 20);
+                    gameState.player.tournaments += 1;
+                    
+                    const performance = gameState.player.skill + gameState.equipment.computerBonus + gameState.equipment.mouseBonus + Math.floor(Math.random() * 25);
+                    let prize = 0;
+                    let result = "";
+                    
+                    if (performance > 105) {
+                        prize = Math.floor(Math.random() * 500) + 1500;
+                        gameState.player.fame += 25;
+                        gameState.player.tournamentWins += 1;
+                        result = "You won 1st place!";
+                    } else if (performance > 90) {
+                        prize = Math.floor(Math.random() * 300) + 1000;
+                        gameState.player.fame += 15;
+                        result = "You got 2nd place!";
+                    } else if (performance > 80) {
+                        prize = Math.floor(Math.random() * 200) + 800;
+                        gameState.player.fame += 10;
+                        result = "You got 3rd place!";
+                    } else {
+                        prize = 500;
+                        gameState.player.fame += 5;
+                        result = "You didn't place in the top 3.";
+                    }
+                    
+                    gameState.player.money += prize;
+                    gameState.player.totalEarnings += prize;
+                    gameState.player.xp += 50;
+                    
+                    showEvent("Championship Results", `${result} You earned $${prize} and gained valuable experience.`);
+                    addNotification(`Regional championship: ${result} +$${prize}, +20 Skill`);
+                    advanceTime(8);
+                    checkLevelUp();
+                } else if (action === 'national-championship') {
+                    if (gameState.player.skill < 85) {
+                        showEvent("Skill Too Low", "You need at least 85 skill points to enter this championship.");
+                        return;
+                    }
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 80);
+                    gameState.player.skill = Math.min(gameState.player.maxSkill, gameState.player.skill + 25);
+                    gameState.player.tournaments += 1;
+                    
+                    const performance = gameState.player.skill + gameState.equipment.computerBonus + gameState.equipment.mouseBonus + Math.floor(Math.random() * 30);
+                    let prize = 0;
+                    let result = "";
+                    
+                    if (performance > 125) {
+                        prize = Math.floor(Math.random() * 2000) + 8000;
+                        gameState.player.fame += 40;
+                        gameState.player.tournamentWins += 1;
+                        result = "You won 1st place!";
+                    } else if (performance > 110) {
+                        prize = Math.floor(Math.random() * 1000) + 5000;
+                        gameState.player.fame += 25;
+                        result = "You got 2nd place!";
+                    } else if (performance > 100) {
+                        prize = Math.floor(Math.random() * 500) + 3000;
+                        gameState.player.fame += 15;
+                        result = "You got 3rd place!";
+                    } else {
+                        prize = 1000;
+                        gameState.player.fame += 10;
+                        result = "You didn't place in the top 3.";
+                    }
+                    
+                    gameState.player.money += prize;
+                    gameState.player.totalEarnings += prize;
+                    gameState.player.xp += 75;
+                    
+                    showEvent("Championship Results", `${result} You earned $${prize} and gained national recognition!`);
+                    addNotification(`National championship: ${result} +$${prize}, +25 Skill`);
+                    advanceTime(12);
+                    checkLevelUp();
+                } else if (action === 'world-championship') {
+                    if (gameState.player.skill < 95) {
+                        showEvent("Skill Too Low", "You need at least 95 skill points to enter the World Championship.");
+                        return;
+                    }
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 100);
+                    gameState.player.skill = Math.min(gameState.player.maxSkill, gameState.player.skill + 30);
+                    gameState.player.tournaments += 1;
+                    
+                    const performance = gameState.player.skill + gameState.equipment.computerBonus + gameState.equipment.mouseBonus + Math.floor(Math.random() * 35);
+                    let prize = 0;
+                    let result = "";
+                    
+                    if (performance > 140) {
+                        prize = Math.floor(Math.random() * 10000) + 40000;
+                        gameState.player.fame += 100;
+                        gameState.player.tournamentWins += 1;
+                        gameState.player.rank = "World Champion";
+                        result = "YOU WON THE WORLD CHAMPIONSHIP!";
+                    } else if (performance > 125) {
+                        prize = Math.floor(Math.random() * 5000) + 20000;
+                        gameState.player.fame += 50;
+                        result = "You got 2nd place in the world!";
+                    } else if (performance > 115) {
+                        prize = Math.floor(Math.random() * 2000) + 10000;
+                        gameState.player.fame += 30;
+                        result = "You got 3rd place in the world!";
+                    } else {
+                        prize = 5000;
+                        gameState.player.fame += 20;
+                        result = "You competed well but didn't place in the top 3.";
+                    }
+                    
+                    gameState.player.money += prize;
+                    gameState.player.totalEarnings += prize;
+                    gameState.player.xp += 100;
+                    
+                    showEvent("World Championship Results", `${result} You earned $${prize} and gained worldwide recognition!`);
+                    addNotification(`World championship: ${result} +$${prize}, +30 Skill`);
+                    advanceTime(16);
+                    checkLevelUp();
+                }
+                
+                // Career tab actions
+                else if (action === 'part-time-job') {
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 20);
+                    gameState.player.money += 50;
+                    gameState.player.xp += 5;
+                    addNotification("You worked at a game store for 4 hours. +$50, +5 XP");
+                    advanceTime(4);
+                    checkLevelUp();
+                } else if (action === 'find-team') {
+                    if (gameState.player.skill < 30 || gameState.player.fame < 10) {
+                        showEvent("Requirements Not Met", "You need at least 30 skill points and 10 fame to join a team.");
+                        return;
+                    }
+                    
+                    if (gameState.player.team !== "None") {
+                        showEvent("Already In Team", "You are already a member of a team.");
+                        return;
+                    }
+                    
+                    // Team tiers based on player skill and fame
+                    const teamTier = Math.floor((gameState.player.skill + gameState.player.fame) / 50);
+                    const teamNames = [
+                        ["Newbie Squad", "Gaming Rookies", "Pixel Punks", "Casual Crushers"],
+                        ["Mid Tier Gamers", "Rising Stars", "Circuit Breakers", "Alpha Gaming"],
+                        ["Elite Esports", "Pro Circuit", "Omega Team", "Cyber Dynasty"],
+                        ["Legendary Gaming", "Championship Squad", "Victory Vanguard", "World Dominators"]
+                    ];
+                    
+                    const tierIndex = Math.min(teamTier, teamNames.length - 1);
+                    const teamName = teamNames[tierIndex][Math.floor(Math.random() * teamNames[tierIndex].length)];
+                    
+                    gameState.player.team = teamName;
+                    gameState.player.monthlyIncome += 100 * (tierIndex + 1);
+                    gameState.player.fame += 10;
+                    
+                    showEvent("Team Joined", `You've been accepted to join ${teamName}! You will now earn $${100 * (tierIndex + 1)} per month as a team member.`);
+                    addNotification(`You joined ${teamName}! Monthly income +$${100 * (tierIndex + 1)}`);
+                    advanceTime(2);
+                } else if (action === 'small-sponsor') {
+                    if (gameState.player.fame < 25) {
+                        showEvent("Fame Too Low", "You need at least 25 fame to attract small sponsors.");
+                        return;
+                    }
+                    
+                    gameState.player.sponsors += 1;
+                    gameState.player.monthlyIncome += 200;
+                    gameState.player.fame += 5;
+                    
+                    showEvent("Sponsorship Acquired", "A small company has agreed to sponsor you! You will now earn an additional $200 per month.");
+                    addNotification("You got a small sponsor! Monthly income +$200");
+                    advanceTime(1);
+                } else if (action === 'major-sponsor') {
+                    if (gameState.player.fame < 60) {
+                        showEvent("Fame Too Low", "You need at least 60 fame to attract major sponsors.");
+                        return;
+                    }
+                    
+                    gameState.player.sponsors += 1;
+                    gameState.player.monthlyIncome += 1000;
+                    gameState.player.fame += 15;
+                    
+                    showEvent("Major Sponsorship", "A major gaming company has agreed to sponsor you! You will now earn an additional $1000 per month.");
+                    addNotification("You got a major sponsor! Monthly income +$1000");
+                    advanceTime(1);
+                }
+                
+                // Social tab actions
+                else if (action === 'create-stream') {
+                    if (gameState.player.skill < 15) {
+                        showEvent("Skill Too Low", "You need at least 15 skill points to start streaming.");
+                        return;
+                    }
+                    
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 20);
+                    
+                    // Calculate stream performance based on skill, fame, and equipment
+                    const streamQuality = gameState.player.skill * 0.5 + gameState.player.fame * 0.3 + gameState.equipment.computerBonus + gameState.equipment.headsetBonus;
+                    
+                    // Base viewers
+                    const baseViewers = gameState.social.twitch || 5;
+                    const viewers = Math.floor(baseViewers * (0.8 + Math.random() * 0.4) * (1 + streamQuality / 100));
+                    const newFollowers = Math.max(1, Math.floor(viewers * 0.05 * (1 + streamQuality / 200)));
+                    const earnings = Math.floor(viewers * 0.02 * (1 + streamQuality / 300));
+                    
+                    gameState.social.twitch += newFollowers;
+                    gameState.player.money += earnings;
+                    gameState.player.fame += Math.min(5, Math.floor(newFollowers / 10));
+                    gameState.player.xp += 15;
+                    
+                    showEvent("Stream Results", `You streamed for 4 hours and had ${viewers} viewers. You gained ${newFollowers} new followers and earned $${earnings}!`);
+                    addNotification(`Stream: ${viewers} viewers, ${newFollowers} new followers, $${earnings} earned.`);
+                    advanceTime(4);
+                    checkLevelUp();
+                } else if (action === 'record-video') {
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 15);
+                    
+                    // Calculate video performance
+                    const videoQuality = gameState.player.skill * 0.4 + gameState.player.fame * 0.4 + gameState.equipment.computerBonus;
+                    
+                    // Base subscribers
+                    const baseSubscribers = gameState.social.youtube || 5;
+                    const views = Math.floor(baseSubscribers * (1 + Math.random() * 1) * (1 + videoQuality / 100));
+                    const newSubscribers = Math.max(1, Math.floor(views * 0.03 * (1 + videoQuality / 200)));
+                    const earnings = Math.floor(views * 0.001 * (1 + videoQuality / 300));
+                    
+                    gameState.social.youtube += newSubscribers;
+                    gameState.player.money += earnings;
+                    gameState.player.fame += Math.min(4, Math.floor(newSubscribers / 10));
+                    gameState.player.xp += 12;
+                    
+                    showEvent("Video Results", `Your YouTube video got ${views} views. You gained ${newSubscribers} new subscribers and earned $${earnings}!`);
+                    addNotification(`Video: ${views} views, ${newSubscribers} new subscribers, $${earnings} earned.`);
+                    advanceTime(3);
+                    checkLevelUp();
+                } else if (action === 'social-post') {
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 5);
+                    
+                    // Social media growth
+                    const twitterGrowth = Math.floor((gameState.social.twitter || 5) * 0.05) + Math.floor(Math.random() * 10) + 1;
+                    const instagramGrowth = Math.floor((gameState.social.instagram || 5) * 0.05) + Math.floor(Math.random() * 10) + 1;
+                    
+                    gameState.social.twitter += twitterGrowth;
+                    gameState.social.instagram += instagramGrowth;
+                    gameState.player.fame += 2;
+                    gameState.player.xp += 5;
+                    
+                    showEvent("Social Media Update", `Your posts gained ${twitterGrowth} Twitter followers and ${instagramGrowth} Instagram followers!`);
+                    addNotification(`Social posts: +${twitterGrowth} Twitter, +${instagramGrowth} Instagram followers.`);
+                    advanceTime(1);
+                    checkLevelUp();
+                } else if (action === 'engage-community') {
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 10);
+                    
+                    // Engagement increases loyalty and retention
+                    const twitchBoost = Math.floor(gameState.social.twitch * 0.02);
+                    const youtubeBoost = Math.floor(gameState.social.youtube * 0.02);
+                    
+                    gameState.social.twitch += twitchBoost;
+                    gameState.social.youtube += youtubeBoost;
+                    gameState.player.fame += 3;
+                    gameState.player.xp += 8;
+                    
+                    showEvent("Community Engagement", `By engaging with your community, you increased your follower loyalty. You gained ${twitchBoost} Twitch followers and ${youtubeBoost} YouTube subscribers!`);
+                    addNotification(`Community engagement: +${twitchBoost} Twitch, +${youtubeBoost} YouTube followers.`);
+                    advanceTime(2);
+                    checkLevelUp();
+                }
+                
+                // Shop tab actions
+                else if (action.startsWith('buy-')) {
+                    const price = parseInt(btn.getAttribute('data-price'));
+                    const item = btn.getAttribute('data-item');
+                    
+                    if (gameState.player.money < price) {
+                        showEvent("Not Enough Money", `You need $${price} to buy this item. You only have $${gameState.player.money}.`);
+                        return;
+                    }
+                    
+                    gameState.player.money -= price;
+                    
+                    // Update equipment based on purchase
+                    if (action === 'buy-mid-pc') {
+                        gameState.equipment.computer = "Mid-Tier PC";
+                        gameState.equipment.computerBonus = 10;
+                        showEvent("Purchase Complete", `You purchased a ${item}! Your gaming skill bonus is now +10.`);
+                    } else if (action === 'buy-gaming-pc') {
+                        gameState.equipment.computer = "Gaming PC";
+                        gameState.equipment.computerBonus = 20;
+                        showEvent("Purchase Complete", `You purchased a ${item}! Your gaming skill bonus is now +20.`);
+                    } else if (action === 'buy-pro-pc') {
+                        gameState.equipment.computer = "Pro Gaming PC";
+                        gameState.equipment.computerBonus = 30;
+                        showEvent("Purchase Complete", `You purchased a ${item}! Your gaming skill bonus is now +30.`);
+                    } else if (action === 'buy-chair') {
+                        gameState.equipment.chair = "Gaming Chair";
+                        gameState.equipment.chairBonus = 10;
+                        showEvent("Purchase Complete", `You purchased a ${item}! Your energy conservation is now +10%.`);
+                    } else if (action === 'buy-headset') {
+                        gameState.equipment.headset = "Pro Headset";
+                        gameState.equipment.headsetBonus = 10;
+                        showEvent("Purchase Complete", `You purchased a ${item}! Your communication bonus is now +10%.`);
+                    } else if (action === 'buy-mouse') {
+                        gameState.equipment.mouse = "Gaming Mouse";
+                        gameState.equipment.mouseBonus = 10;
+                        showEvent("Purchase Complete", `You purchased a ${item}! Your precision bonus is now +10%.`);
+                    }
+                    
+                    addNotification(`You bought a ${item} for $${price}.`);
+                    updateUI();
+                }
+                
+                // Health tab actions
+                else if (action === 'exercise-activity') {
+                    gameState.player.energy = Math.max(0, gameState.player.energy - 10);
+                    gameState.player.health = Math.min(gameState.player.maxHealth, gameState.player.health + 15);
+                    gameState.player.xp += 5;
+                    addNotification("You exercised for 1 hour. +15 Health, +5 XP");
+                    advanceTime(1);
+                    checkLevelUp();
+                } else if (action === 'healthy-meal') {
+                    const price = parseInt(btn.getAttribute('data-price'));
+                    
+                    if (gameState.player.money < price) {
+                        showEvent("Not Enough Money", `You need $${price} for a healthy meal. You only have $${gameState.player.money}.`);
+                        return;
+                    }
+                    
+                    gameState.player.money -= price;
+                    gameState.player.energy = Math.min(gameState.player.maxEnergy, gameState.player.energy + 20);
+                    gameState.player.health = Math.min(gameState.player.maxHealth, gameState.player.health + 10);
+                    gameState.player.xp += 3;
+                    addNotification("You prepared a healthy meal. +20 Energy, +10 Health, +3 XP");
+                    advanceTime(1);
+                    checkLevelUp();
+                } else if (action === 'full-sleep') {
+                    gameState.player.energy = gameState.player.maxEnergy;
+                    gameState.player.health = Math.min(gameState.player.maxHealth, gameState.player.health + 5);
+                    addNotification("You slept for 8 hours. Energy fully restored. +5 Health");
+                    advanceTime(8);
+                } else if (action === 'quick-nap') {
+                    gameState.player.energy = Math.min(gameState.player.maxEnergy, gameState.player.energy + 20);
+                    addNotification("You took a quick nap. +20 Energy");
+                    advanceTime(1);
+                }
+                
+                // Update rank based on skill level
+                updatePlayerRank();
+                
+                // Update UI
+                updateUI();
+            });
+        });
+        
+        // Update player rank based on skill
+        function updatePlayerRank() {
+            const { skill, tournamentWins } = gameState.player;
+            
+            // Only update rank if player hasn't won world championship
+            if (gameState.player.rank !== "World Champion") {
+                if (skill >= 90) {
+                    gameState.player.rank = "Professional";
+                } else if (skill >= 70) {
+                    gameState.player.rank = "Expert";
+                } else if (skill >= 50) {
+                    gameState.player.rank = "Advanced";
+                } else if (skill >= 30) {
+                    gameState.player.rank = "Intermediate";
+                } else if (skill >= 20) {
+                    gameState.player.rank = "Novice";
+                } else {
+                    gameState.player.rank = "Amateur";
+                }
+                
+                // Additional rank based on tournament wins
+                if (tournamentWins >= 10) {
+                    gameState.player.rank = "Champion " + gameState.player.rank;
+                } else if (tournamentWins >= 5) {
+                    gameState.player.rank = "Veteran " + gameState.player.rank;
+                }
+            }
+        }
+        
+        // Start game
+        startGameBtn.addEventListener('click', () => {
+            if (playerNameInput.value.trim() !== '') {
+                gameState.player.name = playerNameInput.value.trim();
+            }
+            introModal.classList.add('hidden');
+            updateUI();
+            addNotification("Welcome to Gamer Life Simulator! Start your journey to become a pro gamer.");
+        });
+        
+        // Event modal close button
+        eventOkBtn.addEventListener('click', () => {
+            eventModal.classList.add('hidden');
+        });
+        
+        // New game button
+        newGameBtn.addEventListener('click', () => {
+            if (confirm("Are you sure you want to start a new game? All progress will be lost.")) {
+                // Reset game state
+                gameState = {
+                    player: {
+                        name: gameState.player.name,
+                        level: 1,
+                        xp: 0,
+                        xpToNextLevel: 100,
+                        energy: 100,
+                        maxEnergy: 100,
+                        health: 100,
+                        maxHealth: 100,
+                        skill: 10,
+                        maxSkill: 100,
+                        fame: 0,
+                        maxFame: 100,
+                        money: 500,
+                        day: 1,
+                        hour: 8,
+                        rank: "Amateur",
+                        team: "None",
+                        sponsors: 0,
+                        monthlyIncome: 0,
+                        tournaments: 0,
+                        tournamentWins: 0,
+                        totalEarnings: 0
+                    },
+                    social: {
+                        twitch: 0,
+                        youtube: 0,
+                        twitter: 0,
+                        instagram: 0
+                    },
+                    equipment: {
+                        computer: "Basic Computer",
+                        chair: "Simple Chair",
+                        headset: "Basic Headset",
+                        mouse: "Standard Mouse",
+                        computerBonus: 5,
+                        chairBonus: 0,
+                        headsetBonus: 0,
+                        mouseBonus: 0
+                    }
+                };
+                
+                // Clear notifications
+                notificationArea.innerHTML = '<div class="notification bg-gray-800 p-2 rounded text-sm">Welcome to Gamer Life Simulator! Start your journey to become a pro gamer.</div>';
+                
+                // Switch to home tab
+                document.querySelector('[data-tab="home"]').click();
+                
+                updateUI();
+                showEvent("New Game Started", "Your previous progress has been reset. Start your journey to become a pro gamer again!");
+            }
+        });
+        
+        // Initialize game
+        updateUI();
+    </script>
+</body>
+</html>
